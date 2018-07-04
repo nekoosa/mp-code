@@ -1,0 +1,10 @@
+{
+  "name": "",
+  "customerExts": "[]",// 自定义项
+  "sex": 0,  // 0 为未知
+  "mobile": "",  // 手机号
+  "shopSerial": "",  // shopserial
+  "branchId": "",  // branchId, 选填
+  "customerId": 1,  // 用户id
+  "channel": 1  // 注册渠道号
+}

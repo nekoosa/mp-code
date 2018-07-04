@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>创建二维码</title>
+    <link rel='stylesheet' href='/css/style.css'/>
+    <script src="/js/zepto.min.js"></script>
+</head>
+
+<body>
+
+<form>
+    <div class="form-item">
+        <label for="type">二维码类型</label>
+        <select id="type" name="type">
+            <option value="2">小程序码(无限次)</option>
+            <option value="1">小程序码(有限次)</option>
+            <option value="3">小程序普通二维码</option>
+        </select>
+    </div>
+    <p class="tip tip1">
+        注意：通过该接口生成的小程序码，永久有效，数量限制见文末说明，请谨慎使用。用户扫描该码进入小程序后，将直接进入 path 对应的页面。
+    </p>
+    <p class="tip tip2" style="display: none">
+        注意：通过该接口生成的小程序码，永久有效，数量暂无限制。用户扫描该码进入小程序后，开发者需在对应页面获取的码中 scene 字段的值，再做处理逻辑。使用如下代码可以获取到二维码中的 scene
+        字段的值。调试阶段可以使用开发工具的条件编译自定义参数 scene=xxxx 进行模拟，开发工具模拟时的 scene 的参数值需要进行 urlencode
+    </p>
+    <p class="tip tip3" style="display: none">
+        注意：通过该接口生成的小程序二维码，永久有效，数量限制见文末说明，请谨慎使用。用户扫描该码进入小程序后，将直接进入 path 对应的页面。
+    </p>
+    <div id="generate-type" class="form-item">
+        <label>是否批量：</label>
+        <label>是<input name="radio" type="radio" value="1"/></label>
+        <label>否<input name="radio" type="radio" value="0" checked/></label>
+    </div>
+    <div id="batch-textarea" class="form-item" style="display: none">
+        <label for="paths">批量生成路径</label>
+        <textarea id="paths" name="path" type="textarea" placeholder="每行一个路径，用;隔开，开头不能有/" style="width: 300px"></textarea>
+    </div>
+    <div id="single-path" class="form-item">
+        <label for="path">path</label>
+        <input id="path" name="path" type="text" placeholder="pages/index/index" style="width: 300px"/>
+    </div>
+    <p class="tip tip1">
+        注意：必须是已经发布的小程序存在的页面，否则报错
+    </p>
+    <div class="form-item">
+        <label for="scene">scene</label>
+        <input id="scene" name="scene" type="text" style="width: 300px"/>
+    </div>
+    <div class="form-item">
+        <label for="width">二维码宽度</label>
+        <input id="width" value="430" type="number" name="with" style="width: 60px">
+    </div>
+
+    <button class="btn">确定</button>
+</form>
+</body>
+<script>
+  /**
+   * 批量生成
+   */
+  function getPaths() {
+    var paths = []
+    var checkedVal = parseInt($("input[name='radio']:checked").val())
+    if (checkedVal === 1){// TODO 批量生成
+      var tmp = $("#paths").val()
+      tmp = tmp.replace(/\n/g, '')
+      paths = tmp.split(';')
+    } else {// 单个路径生成
+      paths.push($("#path").val())
+    }
+    console.log('paths', paths)
+    return paths
+  }
+  /**
+   * 检查路径格式是否正确
+   * @param paths {Array} 路径
+   * @returns {Array}
+   */
+  function pathVerfy(paths) {
+    var i
+    for (i=0; i < paths.length; i++ ) {
+//      result &= /^\//.test(paths[i])
+      paths[i] = paths[i].replace(/^\//, '')
+    }
+    return paths
+  }
+  $("#type").on("change", function (e) {
+    var val = $(this).val();
+    $(".tip").hide();
+    $(".tip" + val).show();
+    if (val === "1" || val === "3") {
+      $("#scene").prop("disabled", true);
+    } else if (val === "2") {
+      $("#scene").prop("disabled", false);
+    }
+  });
+
+  $(".btn").on("click", function (e) {
+    e.preventDefault();
+    var type = $("#type").val();
+    var path = getPaths();
+    var width = $("#width").val();
+    var scene = $("#scene").val();
+    path = pathVerfy(path)
+    $.ajax({
+      type: 'POST',
+      url: "/qrcode",
+      data: {type: type, path: path, width: width, scene: scene},
+//      contentType: "application/json",
+      success: function (resp) {
+        console.info(resp);
+        // TODO 保存图片路径
+        if (!resp.success) {
+          alert(resp.message)
+        } else {
+          window.location.href = resp.attach;
+        }
+      }
+    })
+  })
+    $("#generate-type").on("change", function (e) {
+      var checkedVal = parseInt($("input[name='radio']:checked").val())
+      if (checkedVal === 1){
+        // 批量生成
+        $("#batch-textarea").show()
+        $("#single-path").hide()
+      } else {
+        // 单个路径生成
+        $("#batch-textarea").hide()
+        $("#single-path").show()
+      }
+    })
+</script>
+</html>

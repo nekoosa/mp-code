@@ -1,0 +1,16 @@
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+.form-item {
+  margin-bottom: 20px;
+}
+.form-item label {
+  width: 80px;
+  display: inline-block;
+}
+.btn{
+  width: 80px;
+  height: 30px;
+}
