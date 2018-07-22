@@ -1,0 +1,23 @@
+{% extends 'layout.twig' %}
+
+{% block body %}
+<h1>压缩测试页面</h1>
+<script src="/js/zepto.min.js"></script>
+<script>
+$.ajax({
+      type: 'POST',
+      url: "/compress",
+      data: {},
+//      contentType: "application/json",
+      success: function (resp) {
+        console.info(resp);
+        // TODO 保存图片路径
+        if (!resp.success) {
+          alert(resp.message)
+        } else {
+            console.log('压缩成功')
+        }
+      }
+    })
+</script>
+{% endblock %}

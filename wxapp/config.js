@@ -1,6 +1,5 @@
 const config = {
-  appId:"wx9d727c1*********",
-  secret:"543f8344f1f1a4****************"
+  // appId: "wx284f******e26",
+  // secret: "f414fb0af********67155e46b63"
 };
-
 module.exports = config;

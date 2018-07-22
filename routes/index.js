@@ -7,6 +7,7 @@ const wxapp = require('../wxapp/index');
 const qrcode = require('../wxapp/api/qrcode');
 
 router.get('/', async function (req, res, next) {
+  // res.render("express")
   res.render("index")
 });
 
@@ -47,10 +48,16 @@ router.post('/qrcode', async function (req, res, next) {
   let accessToken = await wxapp.getAccessToken();
   let resp = null;
   let result = [];
-  let output = fs.createWriteStream(Path.resolve(__dirname + '../cache/tmp.zip'));
-  let archive = archiver('zip', {
-    zlib: { level: 9 } // Sets the compression level.
-  });
+
+  // resp = await qrcode.getWxaCode({
+  //   accessToken: accessToken,
+  //   path: reqData.path[0],
+  // });
+  // res.send(resp);
+
+  // console.log('tmp name: ', Path.join(__dirname, '../runtime/tmp.zip'))
+  let output = fs.createWriteStream('public/tmp.zip');
+  let archive = archiver('zip');
   archive.pipe(output);
   if (reqData.type === "2") { // 小程序码无限次
     for (let path of reqData.path) {
@@ -59,7 +66,8 @@ router.post('/qrcode', async function (req, res, next) {
         page: path,
         scene: reqData.scene
       })
-      archive.append(new Buffer(resp.data, 'binary'), { name: path.replace('/', '.') + '.txt' });
+      console.log('path:', path.replace(/\//g, '_') + '.png')
+      archive.append(new Buffer(resp.data, 'binary'), { name: path.replace(/\//g, '_') + '.png' });
     }
   } else if (reqData.type === "1") { // 小程序码有限次
     for (let path of reqData.path) {
@@ -67,7 +75,9 @@ router.post('/qrcode', async function (req, res, next) {
         accessToken: accessToken,
         path: path,
       });
-      archive.append(new Buffer(resp.data, 'binary'), { name: path.replace('/', '.') + '.txt' });
+      archive.append(new Buffer(resp.data, 'binary'), { name: 'images/' + path.replace(/\//g, '_') + '.png' }, function (result) {
+        console.log('append result:', result)
+      });
     }
   } else if (reqData.type === "3") { // 二维码
     for (let path of reqData.path) {
@@ -75,33 +85,35 @@ router.post('/qrcode', async function (req, res, next) {
         accessToken: accessToken,
         path: path,
       });
-      archive.append(new Buffer(resp.data, 'binary'), { name: path.replace('/', '.') + '.txt' });
+      console.log('path:', path.replace(/\//g, '_') + '.png')
+      archive.append(new Buffer(resp.data, 'binary'), { name: path.replace(/\//g, '_') + '.png' });
     }
   }
   archive.finalize();
-  // TODO 根据路径生成压缩包返回
+  // 根据路径生成压缩包返回
   if (resp.headers["content-type"].indexOf("json") !== -1) {
     let content = resp.data.toString();
-    console.info(content);
     ret.success = false;
     ret.message = JSON.parse(content)["errmsg"];
     res.send(ret);
   } else {
-    ret.attach = '/cache/tmp.zip';
-    ret.success = true;
-    res.send(ret);
+    // 保证压缩包已经压缩完毕
+    setTimeout(() => {
+      ret.attach = 'tmp.zip';
+      ret.success = true;
+      res.send(ret);
+    }, 100)
   }
   // if (resp.headers["content-type"].indexOf("json") !== -1) {
   //   let content = buf.toString();
-  //   console.info(content);
   //   ret.success = false;
   //   ret.message = JSON.parse(content)["errmsg"];
   //   res.send(ret);
   // } else {
+  //   let buf = new Buffer(resp.data, 'binary');
   //   ret.attach = wxapp.saveImage(buf);
   //   ret.success = true;
   //   res.send(ret);
   // }
 });
-
 module.exports = router;
